@@ -4,6 +4,8 @@
 This fork maily attempts to solve the problem that several 2D gnuplot plotting styles accept 3D data for various reasons (errorbars, circle diameter etc.). The same is true for 1D plotting styles.
 Secondly, gnuplot natievly allows for extensive configuration of plotted data. This is an attempt to address this as well.
 
+The general method of this library is to construct a temporary file from the data that is to be plottet and create a gnuplot command string that is to be executed by gnuplot.
+
 # Glot
 `glot` is a plotting library for Golang built on top of [gnuplot](http://www.gnuplot.info/). `glot` currently supports styles like lines, points, bars, steps, histogram, circle, and many others. We are continuously making efforts to add more features.  
 
