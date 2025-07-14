@@ -1,5 +1,9 @@
  [![Build Status](https://travis-ci.org/Arafatk/glot.svg?branch=master)](https://travis-ci.org/Arafatk/glot) [![GoDoc](https://godoc.org/github.com/arafat/glot?status.svg)](https://godoc.org/github.com/Arafatk/glot) [![Join the chat at https://gitter.im/tensorflowrb/Lobby](https://badges.gitter.im/tensorflowrb/Lobby.svg)](https://gitter.im/glot-dev/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)  ![License](https://img.shields.io/badge/License-MIT-blue.svg)  
 
+# General
+This fork maily attempts to solve the problem that several 2D gnuplot plotting styles accept 3D data for various reasons (errorbars, circle diameter etc.). The same is true for 1D plotting styles.
+Secondly, gnuplot natievly allows for extensive configuration of plotted data. This is an attempt to address this as well.
+
 # Glot
 `glot` is a plotting library for Golang built on top of [gnuplot](http://www.gnuplot.info/). `glot` currently supports styles like lines, points, bars, steps, histogram, circle, and many others. We are continuously making efforts to add more features.  
 
