@@ -76,7 +76,7 @@ func newPlotterProc(persist bool) (*plotterProcess, error) {
 //	if err != nil {
 //	  panic(err)
 //	}
-func (plot *Plot) Cmd(format string, a ...interface{}) error {
+func (plot *Plot) Cmd(format string, a ...any) error {
 	cmd := fmt.Sprintf(format, a...) + "\n"
 	n, err := io.WriteString(plot.proc.stdin, cmd)
 	if plot.debug {
@@ -94,7 +94,7 @@ func (plot *Plot) Cmd(format string, a ...interface{}) error {
 //
 //	fname := "foo.dat"
 //	p.CheckedCmd("plot %s", fname)
-func (plot *Plot) CheckedCmd(format string, a ...interface{}) {
+func (plot *Plot) CheckedCmd(format string, a ...any) {
 	err := plot.Cmd(format, a...)
 	if err != nil {
 		_ = fmt.Errorf("** err: %v\n", err)

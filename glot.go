@@ -9,7 +9,6 @@ package glot
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
@@ -38,14 +37,17 @@ type Plot struct {
 // NewPlot Function makes a new plot with the specified dimensions.
 //
 // Usage
-//  dimensions := 3
-//  persist := false
-//  debug := false
-//  plot, _ := glot.NewPlot(dimensions, persist, debug)
+//
+//	dimensions := 3
+//	persist := false
+//	debug := false
+//	plot, _ := glot.NewPlot(dimensions, persist, debug)
+//
 // Variable definitions
-//  dimensions  :=> refers to the dimensions of the plot.
-//  debug       :=> can be used by developers to check the actual commands sent to gnu plot.
-//  persist     :=> used to make the gnu plot window stay open.
+//
+//	dimensions  :=> refers to the dimensions of the plot.
+//	debug       :=> can be used by developers to check the actual commands sent to gnu plot.
+//	persist     :=> used to make the gnu plot window stay open.
 func NewPlot(dimensions int, persist, debug bool) (*Plot, error) {
 	p := &Plot{proc: nil, debug: debug, plotcmd: "plot",
 		nplots: 0, dimensions: dimensions, style: "points", format: "png"}
@@ -64,14 +66,14 @@ func NewPlot(dimensions int, persist, debug bool) (*Plot, error) {
 }
 
 func (plot *Plot) plotX(PointGroup *PointGroup) error {
-	f, err := ioutil.TempFile(os.TempDir(), gGnuplotPrefix)
+	f, err := os.CreateTemp(os.TempDir(), gGnuplotPrefix)
 	if err != nil {
 		return err
 	}
 	fname := f.Name()
 	plot.tmpfiles[fname] = f
 	for _, d := range PointGroup.castedData.([]float64) {
-		f.WriteString(fmt.Sprintf("%v\n", d))
+		fmt.Fprintf(f, "%v\n", d)
 	}
 	f.Close()
 	cmd := plot.plotcmd
@@ -81,15 +83,14 @@ func (plot *Plot) plotX(PointGroup *PointGroup) error {
 	if PointGroup.style == "" {
 		PointGroup.style = defaultStyle
 	}
-	var line string
 	if PointGroup.name == "" {
-		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, PointGroup.style)
+		plot.nplots++
+		return plot.Cmd("%s \"%s\" with %s", cmd, fname, PointGroup.style)
 	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
+		plot.nplots++
+		return plot.Cmd("%s \"%s\" title \"%s\" with %s",
 			cmd, fname, PointGroup.name, PointGroup.style)
 	}
-	plot.nplots++
-	return plot.Cmd(line)
 }
 
 func (plot *Plot) plotXY(PointGroup *PointGroup) error {
@@ -97,15 +98,15 @@ func (plot *Plot) plotXY(PointGroup *PointGroup) error {
 	y := PointGroup.castedData.([][]float64)[1]
 	npoints := min(len(x), len(y))
 
-	f, err := ioutil.TempFile(os.TempDir(), gGnuplotPrefix)
+	f, err := os.CreateTemp(os.TempDir(), gGnuplotPrefix)
 	if err != nil {
 		return err
 	}
 	fname := f.Name()
 	plot.tmpfiles[fname] = f
 
-	for i := 0; i < npoints; i++ {
-		f.WriteString(fmt.Sprintf("%v %v\n", x[i], y[i]))
+	for i := range npoints {
+		fmt.Fprintf(f, "%v %v\n", x[i], y[i])
 	}
 
 	f.Close()
@@ -117,15 +118,14 @@ func (plot *Plot) plotXY(PointGroup *PointGroup) error {
 	if PointGroup.style == "" {
 		PointGroup.style = "points"
 	}
-	var line string
 	if PointGroup.name == "" {
-		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, PointGroup.style)
+		plot.nplots++
+		return plot.Cmd("%s \"%s\" with %s", cmd, fname, PointGroup.style)
 	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
+		plot.nplots++
+		return plot.Cmd("%s \"%s\" title \"%s\" with %s",
 			cmd, fname, PointGroup.name, PointGroup.style)
 	}
-	plot.nplots++
-	return plot.Cmd(line)
 }
 
 func (plot *Plot) plotXYZ(points *PointGroup) error {
@@ -134,7 +134,7 @@ func (plot *Plot) plotXYZ(points *PointGroup) error {
 	z := points.castedData.([][]float64)[2]
 	npoints := min(len(x), len(y))
 	npoints = min(npoints, len(z))
-	f, err := ioutil.TempFile(os.TempDir(), gGnuplotPrefix)
+	f, err := os.CreateTemp(os.TempDir(), gGnuplotPrefix)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (plot *Plot) plotXYZ(points *PointGroup) error {
 	plot.tmpfiles[fname] = f
 
 	for i := 0; i < npoints; i++ {
-		f.WriteString(fmt.Sprintf("%v %v %v\n", x[i], y[i], z[i]))
+		fmt.Fprintf(f, "%v %v %v\n", x[i], y[i], z[i])
 	}
 
 	f.Close()
@@ -151,13 +151,12 @@ func (plot *Plot) plotXYZ(points *PointGroup) error {
 		cmd = plotCommand
 	}
 
-	var line string
 	if points.name == "" {
-		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, points.style)
+		plot.nplots++
+		return plot.Cmd("%s \"%s\" with %s", cmd, fname, points.style)
 	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
+		plot.nplots++
+		return plot.Cmd("%s \"%s\" title \"%s\" with %s",
 			cmd, fname, points.name, points.style)
 	}
-	plot.nplots++
-	return plot.Cmd(line)
 }

@@ -4,56 +4,96 @@ import (
 	"fmt"
 )
 
+// Requirement for each plot style concerning dimensionality and number of columns.
+var plotting_styles = map[string]map[int]int{
+	"lines":          {2: 2, 3: 3},
+	"points":         {2: 2, 3: 3},
+	"linepoints":     {2: 2, 3: 3},
+	"dots":           {2: 2, 3: 3},
+	"circle":         {2: 6},
+	"boxerrorbars":   {2: 5},
+	"boxxyerrorbars": {2: 6},
+	"boxes":          {2: 3, 3: 5},
+	"candlesticks":   {2: 7},
+	"filledcurves":   {2: 3},
+	"financebars":    {2: 5},
+	"histograms":     {2: 3},
+	"hsteps":         {2: 3},
+	"histeps":        {2: 2},
+	"image":          {2: 3, 3: 4},
+	"impulses":       {2: 3},
+	"labels":         {2: 3, 3: 4},
+	"linespoints":    {2: 2, 3: 3},
+	"rgbimage":       {2: 3, 3: 4},
+	"fsteps":         {2: 2},
+	"steps":          {2: 2},
+	"vectors":        {2: 5, 3: 7},
+	"xerrorbars":     {2: 4},
+	"xyerrorbars":    {2: 6},
+	"yerrorbars":     {2: 4},
+	"xyerrorlines":   {2: 6},
+	"xerrorlines":    {2: 4},
+	"yerrorlines":    {2: 4},
+	// "pm3d":           true,
+	// "table":       true,
+}
+
 // A PointGroup refers to a set of points that need to plotted.
 // It could either be a set of points or a function of co-ordinates.
 // For Example z = Function(x,y)(3 Dimensional) or  y = Function(x) (2-Dimensional)
 type PointGroup struct {
-	name       string      // Name of the curve
-	dimensions int         // dimensions of the curve
-	style      string      // current plotting style
-	data       interface{} // Data inside the curve in any integer/float format
-	castedData interface{} // The data inside the curve typecasted to float64
-	set        bool        //
+	name             string            // Name of the curve
+	dimensions       int               // dimensions of the curve
+	style            string            // current plotting style
+	data             any               // Data inside the curve in any integer/float format
+	castedData       any               // The data inside the curve typecasted to float64
+	set              bool              // TODO: unused
+	plotObjectStyles []PlotObjectStyle // style of the plotted data
 }
 
 // AddPointGroup function adds a group of points to a plot.
 //
 // Usage
-//  dimensions := 2
-//  persist := false
-//  debug := false
-//  plot, _ := glot.NewPlot(dimensions, persist, debug)
-//  plot.AddPointGroup("Sample1", "points", []int32{51, 8, 4, 11})
-//  plot.AddPointGroup("Sample2", "points", []int32{1, 2, 4, 11})
-//  plot.SavePlot("1.png")
-func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (err error) {
+//
+//	dimensions := 2
+//	persist := false
+//	debug := false
+//	plot, _ := glot.NewPlot(dimensions, persist, debug)
+//	plot.AddPointGroup("Sample1", "points", []int32{51, 8, 4, 11})
+//	plot.AddPointGroup("Sample2", "points", []int32{1, 2, 4, 11})
+//	plot.SavePlot("1.png")
+func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...PlotObjectStyle) (err error) {
 	_, exists := plot.PointGroup[name]
 	if exists {
 		return &gnuplotError{fmt.Sprintf("A PointGroup with the name %s  already exists, please use another name of the curve or remove this curve before using another one with the same name.", name)}
 	}
 
-	curve := &PointGroup{name: name, dimensions: plot.dimensions, data: data, set: true}
-	allowed := []string{
-		"lines", "points", "linepoints",
-		"impulses", "dots", "bar",
-		"steps", "fill solid", "histogram", "circle",
-		"errorbars", "boxerrorbars",
-		"boxes", "lp"}
+	curve := &PointGroup{name: name, dimensions: plot.dimensions, data: data, set: true, plotObjectStyles: spec}
+	var allowed []string
 	curve.style = defaultStyle
 	discovered := 0
-	for _, s := range allowed {
-		if s == style {
+	for s := range plotting_styles {
+		allowed = append(allowed, s)
+	}
+	if d, ok := plotting_styles[style]; ok {
+		if _, ok := d[curve.dimensions]; ok {
 			curve.style = style
 			err = nil
 			discovered = 1
 		}
 	}
-	switch data.(type) {
+
+	if discovered == 0 {
+		fmt.Printf("** style '%v' not in allowed list %v\n", style, allowed)
+		fmt.Printf("** default to 'points'\n")
+		return &gnuplotError{fmt.Sprintf("invalid style '%s'", style)}
+	}
+	switch d := data.(type) {
 	case [][]float64:
-		if plot.dimensions != len(data.([][]float64)) {
-			return &gnuplotError{fmt.Sprintf("The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot.")}
+		if plot.dimensions != len(d) {
+			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
-		curve.castedData = data.([][]float64)
+		curve.castedData = d
 		if plot.dimensions == 2 {
 			plot.plotXY(curve)
 		} else {
@@ -62,12 +102,12 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 		plot.PointGroup[name] = curve
 
 	case [][]float32:
-		if plot.dimensions != len(data.([][]float32)) {
-			return &gnuplotError{fmt.Sprintf("The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot.")}
+		if plot.dimensions != len(d) {
+			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
-		originalSlice := data.([][]float32)
+		originalSlice := d
 		typeCasteSlice := make([][]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
 			for j := 0; j < len(originalSlice[i]); j++ {
 				typeCasteSlice[i][j] = float64(originalSlice[i][j])
@@ -82,15 +122,15 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 		plot.PointGroup[name] = curve
 
 	case [][]int:
-		if plot.dimensions != len(data.([][]int)) {
-			return &gnuplotError{fmt.Sprintf("The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot.")}
+		if plot.dimensions != len(d) {
+			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
-		originalSlice := data.([][]int)
+		originalSlice := d
 		if len(originalSlice) != 2 {
-			return &gnuplotError{fmt.Sprintf("this is not a 2d matrix")}
+			return &gnuplotError{"this is not a 2d matrix"}
 		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
 			for j := 0; j < len(originalSlice[i]); j++ {
 				typeCasteSlice[i][j] = float64(originalSlice[i][j])
@@ -105,15 +145,15 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 		plot.PointGroup[name] = curve
 
 	case [][]int8:
-		if plot.dimensions != len(data.([][]int8)) {
-			return &gnuplotError{fmt.Sprintf("The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot.")}
+		if plot.dimensions != len(d) {
+			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
-		originalSlice := data.([][]int8)
+		originalSlice := d
 		if len(originalSlice) != 2 {
-			return &gnuplotError{fmt.Sprintf("this is not a 2d matrix")}
+			return &gnuplotError{"this is not a 2d matrix"}
 		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
 			for j := 0; j < len(originalSlice[i]); j++ {
 				typeCasteSlice[i][j] = float64(originalSlice[i][j])
@@ -129,15 +169,15 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 		plot.PointGroup[name] = curve
 
 	case [][]int16:
-		if plot.dimensions != len(data.([][]int16)) {
-			return &gnuplotError{fmt.Sprintf("The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot.")}
+		if plot.dimensions != len(d) {
+			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
-		originalSlice := data.([][]int16)
+		originalSlice := d
 		if len(originalSlice) != 2 {
-			return &gnuplotError{fmt.Sprintf("this is not a 2d matrix")}
+			return &gnuplotError{"this is not a 2d matrix"}
 		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
 			for j := 0; j < len(originalSlice[i]); j++ {
 				typeCasteSlice[i][j] = float64(originalSlice[i][j])
@@ -153,15 +193,15 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 		plot.PointGroup[name] = curve
 
 	case [][]int32:
-		if plot.dimensions != len(data.([][]int32)) {
-			return &gnuplotError{fmt.Sprintf("The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot.")}
+		if plot.dimensions != len(d) {
+			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
-		originalSlice := data.([][]int32)
+		originalSlice := d
 		if len(originalSlice) != 2 {
-			return &gnuplotError{fmt.Sprintf("this is not a 2d matrix")}
+			return &gnuplotError{"this is not a 2d matrix"}
 		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
 			for j := 0; j < len(originalSlice[i]); j++ {
 				typeCasteSlice[i][j] = float64(originalSlice[i][j])
@@ -177,15 +217,15 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 		plot.PointGroup[name] = curve
 
 	case [][]int64:
-		if plot.dimensions != len(data.([][]int64)) {
-			return &gnuplotError{fmt.Sprintf("The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot.")}
+		if plot.dimensions != len(d) {
+			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
-		originalSlice := data.([][]int64)
+		originalSlice := d
 		if len(originalSlice) != 2 {
-			return &gnuplotError{fmt.Sprintf("this is not a 2d matrix")}
+			return &gnuplotError{"this is not a 2d matrix"}
 		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
 			for j := 0; j < len(originalSlice[i]); j++ {
 				typeCasteSlice[i][j] = float64(originalSlice[i][j])
@@ -201,71 +241,66 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 		plot.PointGroup[name] = curve
 
 	case []float64:
-		curve.castedData = data.([]float64)
+		curve.castedData = d
 		plot.plotX(curve)
 		plot.PointGroup[name] = curve
 	case []float32:
-		originalSlice := data.([]float32)
+		originalSlice := d
 		typeCasteSlice := make([]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
 		plot.plotX(curve)
 		plot.PointGroup[name] = curve
 	case []int:
-		originalSlice := data.([]int)
+		originalSlice := d
 		typeCasteSlice := make([]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
 		plot.plotX(curve)
 		plot.PointGroup[name] = curve
 	case []int8:
-		originalSlice := data.([]int8)
+		originalSlice := d
 		typeCasteSlice := make([]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
 		plot.plotX(curve)
 		plot.PointGroup[name] = curve
 	case []int16:
-		originalSlice := data.([]int16)
+		originalSlice := d
 		typeCasteSlice := make([]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
 		plot.plotX(curve)
 		plot.PointGroup[name] = curve
 	case []int32:
-		originalSlice := data.([]int32)
+		originalSlice := d
 		typeCasteSlice := make([]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
 		plot.plotX(curve)
 		plot.PointGroup[name] = curve
 	case []int64:
-		originalSlice := data.([]int64)
+		originalSlice := d
 		typeCasteSlice := make([]float64, len(originalSlice))
-		for i := 0; i < len(originalSlice); i++ {
+		for i := range originalSlice {
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
 		plot.plotX(curve)
 		plot.PointGroup[name] = curve
 	default:
-		return &gnuplotError{fmt.Sprintf("invalid number of dims ")}
+		return &gnuplotError{"invalid number of dims "}
 
-	}
-	if discovered == 0 {
-		fmt.Printf("** style '%v' not in allowed list %v\n", style, allowed)
-		fmt.Printf("** default to 'points'\n")
-		err = &gnuplotError{fmt.Sprintf("invalid style '%s'", style)}
 	}
 	return err
 }
@@ -274,13 +309,14 @@ func (plot *Plot) AddPointGroup(name string, style string, data interface{}) (er
 // This way you can remove a pointgroup if it's un-necessary.
 //
 // Usage
-//  dimensions := 3
-//  persist := false
-//  debug := false
-//  plot, _ := glot.NewPlot(dimensions, persist, debug)
-//  plot.AddPointGroup("Sample1", "points", []int32{51, 8, 4, 11})
-//  plot.AddPointGroup("Sample2", "points", []int32{1, 2, 4, 11})
-//  plot.RemovePointGroup("Sample1")
+//
+//	dimensions := 3
+//	persist := false
+//	debug := false
+//	plot, _ := glot.NewPlot(dimensions, persist, debug)
+//	plot.AddPointGroup("Sample1", "points", []int32{51, 8, 4, 11})
+//	plot.AddPointGroup("Sample2", "points", []int32{1, 2, 4, 11})
+//	plot.RemovePointGroup("Sample1")
 func (plot *Plot) RemovePointGroup(name string) {
 	delete(plot.PointGroup, name)
 	plot.cleanplot()
@@ -294,12 +330,13 @@ func (plot *Plot) RemovePointGroup(name string) {
 // And dynamically change the plots.
 //
 // Usage
-//  dimensions := 2
-//  persist := false
-//  debug := false
-//  plot, _ := glot.NewPlot(dimensions, persist, debug)
-//  plot.AddPointGroup("Sample1", "points", []int32{51, 8, 4, 11})
-//  plot.ResetPointGroupStyle("Sample1", "points")
+//
+//	dimensions := 2
+//	persist := false
+//	debug := false
+//	plot, _ := glot.NewPlot(dimensions, persist, debug)
+//	plot.AddPointGroup("Sample1", "points", []int32{51, 8, 4, 11})
+//	plot.ResetPointGroupStyle("Sample1", "points")
 func (plot *Plot) ResetPointGroupStyle(name string, style string) (err error) {
 	pointGroup, exists := plot.PointGroup[name]
 	if !exists {
