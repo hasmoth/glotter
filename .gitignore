@@ -1,0 +1,5 @@
+*.txt
+.*
+*.mod
+*.pdf
+!/.gitignore
