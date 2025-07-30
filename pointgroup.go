@@ -75,8 +75,10 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 	for s := range plotting_styles {
 		allowed = append(allowed, s)
 	}
+	var max_cols int
 	if d, ok := plotting_styles[style]; ok {
-		if _, ok := d[curve.dimensions]; ok {
+		var ok bool
+		if max_cols, ok = d[curve.dimensions]; ok {
 			curve.style = style
 			err = nil
 			discovered = 1
@@ -90,7 +92,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 	}
 	switch d := data.(type) {
 	case [][]float64:
-		if plot.dimensions != len(d) {
+		if max_cols >= len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		curve.castedData = d
@@ -102,7 +104,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]float32:
-		if plot.dimensions != len(d) {
+		if max_cols >= len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
@@ -122,7 +124,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int:
-		if plot.dimensions != len(d) {
+		if max_cols >= len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
@@ -145,7 +147,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int8:
-		if plot.dimensions != len(d) {
+		if max_cols >= len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
@@ -169,7 +171,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int16:
-		if plot.dimensions != len(d) {
+		if max_cols >= len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
@@ -193,7 +195,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int32:
-		if plot.dimensions != len(d) {
+		if max_cols >= len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
@@ -217,7 +219,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int64:
-		if plot.dimensions != len(d) {
+		if max_cols >= len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d

@@ -10,6 +10,7 @@ package glot
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 // Plot is the basic type representing a plot.
@@ -85,11 +86,11 @@ func (plot *Plot) plotX(PointGroup *PointGroup) error {
 	}
 	if PointGroup.name == "" {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" with %s", cmd, fname, PointGroup.style)
+		return plot.Cmd("%s \"%s\" %v with %s", cmd, fname, PointGroup.plotObjectStyles, PointGroup.style)
 	} else {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" title \"%s\" with %s",
-			cmd, fname, PointGroup.name, PointGroup.style)
+		return plot.Cmd("%s \"%s\" title \"%s\" %v with %s",
+			cmd, fname, PointGroup.name, strings.Trim(fmt.Sprint(PointGroup.plotObjectStyles), "[]"), PointGroup.style)
 	}
 }
 
@@ -120,11 +121,11 @@ func (plot *Plot) plotXY(PointGroup *PointGroup) error {
 	}
 	if PointGroup.name == "" {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" with %s", cmd, fname, PointGroup.style)
+		return plot.Cmd("%s \"%s\" %s with %s", cmd, fname, PointGroup.plotObjectStyles, PointGroup.style)
 	} else {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" title \"%s\" with %s",
-			cmd, fname, PointGroup.name, PointGroup.style)
+		return plot.Cmd("%s \"%s\" title \"%s\" %s with %s",
+			cmd, fname, PointGroup.name, PointGroup.plotObjectStyles, PointGroup.style)
 	}
 }
 
