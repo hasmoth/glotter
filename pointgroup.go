@@ -10,7 +10,7 @@ var plotting_styles = map[string]map[int]int{
 	"points":         {2: 2, 3: 3},
 	"linepoints":     {2: 2, 3: 3},
 	"dots":           {2: 2, 3: 3},
-	"circle":         {2: 6},
+	"circles":        {2: 6},
 	"boxerrorbars":   {2: 5},
 	"boxxyerrorbars": {2: 6},
 	"boxes":          {2: 3, 3: 5},
