@@ -63,6 +63,8 @@ func NewPlot(dimensions int, persist, debug bool) (*Plot, error) {
 		return nil, &gnuplotError{fmt.Sprintf("invalid number of dims '%v'", dimensions)}
 	}
 	p.proc = proc
+	p.Cmd("set term %s %s", "wxt", "enhanced")
+
 	return p, nil
 }
 
@@ -86,7 +88,7 @@ func (plot *Plot) plotX(PointGroup *PointGroup) error {
 	}
 	if PointGroup.name == "" {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" %v with %s", cmd, fname, PointGroup.plotObjectStyles, PointGroup.style)
+		return plot.Cmd("%s \"%s\" %v with %s", cmd, fname, strings.Trim(fmt.Sprint(PointGroup.plotObjectStyles), "[]"), PointGroup.style)
 	} else {
 		plot.nplots++
 		return plot.Cmd("%s \"%s\" title \"%s\" %v with %s",
@@ -95,9 +97,8 @@ func (plot *Plot) plotX(PointGroup *PointGroup) error {
 }
 
 func (plot *Plot) plotXY(PointGroup *PointGroup) error {
-	x := PointGroup.castedData.([][]float64)[0]
-	y := PointGroup.castedData.([][]float64)[1]
-	npoints := min(len(x), len(y))
+	// transpose list of columns to list of rows
+	rows, min_len := transpose(PointGroup.castedData.([][]float64))
 
 	f, err := os.CreateTemp(os.TempDir(), gGnuplotPrefix)
 	if err != nil {
@@ -106,8 +107,8 @@ func (plot *Plot) plotXY(PointGroup *PointGroup) error {
 	fname := f.Name()
 	plot.tmpfiles[fname] = f
 
-	for i := range npoints {
-		fmt.Fprintf(f, "%v %v\n", x[i], y[i])
+	for i := range min_len {
+		fmt.Fprintf(f, "%s\n", strings.Trim(fmt.Sprint(rows[i]), "[]"))
 	}
 
 	f.Close()
@@ -121,18 +122,18 @@ func (plot *Plot) plotXY(PointGroup *PointGroup) error {
 	}
 	if PointGroup.name == "" {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" %s with %s", cmd, fname, PointGroup.plotObjectStyles, PointGroup.style)
+		return plot.Cmd("%s \"%s\" %s with %s", cmd, fname, strings.Trim(fmt.Sprint(PointGroup.plotObjectStyles), "[]"), PointGroup.style)
 	} else {
 		plot.nplots++
 		return plot.Cmd("%s \"%s\" title \"%s\" %s with %s",
-			cmd, fname, PointGroup.name, PointGroup.plotObjectStyles, PointGroup.style)
+			cmd, fname, PointGroup.name, strings.Trim(fmt.Sprint(PointGroup.plotObjectStyles), "[]"), PointGroup.style)
 	}
 }
 
-func (plot *Plot) plotXYZ(points *PointGroup) error {
-	x := points.castedData.([][]float64)[0]
-	y := points.castedData.([][]float64)[1]
-	z := points.castedData.([][]float64)[2]
+func (plot *Plot) plotXYZ(PointGroup *PointGroup) error {
+	x := PointGroup.castedData.([][]float64)[0]
+	y := PointGroup.castedData.([][]float64)[1]
+	z := PointGroup.castedData.([][]float64)[2]
 	npoints := min(len(x), len(y))
 	npoints = min(npoints, len(z))
 	f, err := os.CreateTemp(os.TempDir(), gGnuplotPrefix)
@@ -152,12 +153,12 @@ func (plot *Plot) plotXYZ(points *PointGroup) error {
 		cmd = plotCommand
 	}
 
-	if points.name == "" {
+	if PointGroup.name == "" {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" with %s", cmd, fname, points.style)
+		return plot.Cmd("%s \"%s\" %s with %s", cmd, fname, strings.Trim(fmt.Sprint(PointGroup.plotObjectStyles), "[]"), PointGroup.style)
 	} else {
 		plot.nplots++
-		return plot.Cmd("%s \"%s\" title \"%s\" with %s",
-			cmd, fname, points.name, points.style)
+		return plot.Cmd("%s \"%s\" title \"%s\" %s with %s",
+			cmd, fname, PointGroup.name, strings.Trim(fmt.Sprint(PointGroup.plotObjectStyles), "[]"), PointGroup.style)
 	}
 }

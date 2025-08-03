@@ -92,7 +92,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 	}
 	switch d := data.(type) {
 	case [][]float64:
-		if max_cols >= len(d) {
+		if max_cols < len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		curve.castedData = d
@@ -104,7 +104,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]float32:
-		if max_cols >= len(d) {
+		if max_cols < len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
@@ -124,13 +124,10 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int:
-		if max_cols >= len(d) {
+		if max_cols < len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
-		if len(originalSlice) != 2 {
-			return &gnuplotError{"this is not a 2d matrix"}
-		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
 		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
@@ -147,13 +144,10 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int8:
-		if max_cols >= len(d) {
+		if max_cols < len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
-		if len(originalSlice) != 2 {
-			return &gnuplotError{"this is not a 2d matrix"}
-		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
 		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
@@ -171,13 +165,10 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int16:
-		if max_cols >= len(d) {
+		if max_cols < len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
-		if len(originalSlice) != 2 {
-			return &gnuplotError{"this is not a 2d matrix"}
-		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
 		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
@@ -195,13 +186,10 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int32:
-		if max_cols >= len(d) {
+		if max_cols < len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
-		if len(originalSlice) != 2 {
-			return &gnuplotError{"this is not a 2d matrix"}
-		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
 		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))
@@ -219,13 +207,10 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int64:
-		if max_cols >= len(d) {
+		if max_cols < len(d) {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
-		if len(originalSlice) != 2 {
-			return &gnuplotError{"this is not a 2d matrix"}
-		}
 		typeCasteSlice := make([][]float64, len(originalSlice))
 		for i := range originalSlice {
 			typeCasteSlice[i] = make([]float64, len(originalSlice[i]))

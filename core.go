@@ -3,6 +3,7 @@ package glot
 import (
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"runtime"
@@ -19,6 +20,28 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func min_len(a [][]float64) int {
+	min_len := math.MaxInt
+	for _, d := range a {
+		len_d := len(d)
+		if len_d < min_len {
+			min_len = len_d
+		}
+	}
+	return min_len
+}
+
+func transpose(a [][]float64) ([][]float64, int) {
+	min_len := min_len(a)
+	rows := make([][]float64, min_len)
+	for i := range rows {
+		for _, d := range a {
+			rows[i] = append(rows[i], d[i])
+		}
+	}
+	return rows, min_len
 }
 
 // Function to intialize the package and check for GNU plot installation
