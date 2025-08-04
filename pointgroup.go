@@ -144,7 +144,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		plot.PointGroup[name] = curve
 
 	case [][]int8:
-		if max_cols < len(d) {
+		if max_cols < len(d) || len(d) < plot.dimensions {
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		originalSlice := d
