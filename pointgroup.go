@@ -96,11 +96,8 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			return &gnuplotError{"The dimensions of this PointGroup are not compatible with the dimensions of the plot.\nIf you want to make a 2-d curve you must specify a 2-d plot."}
 		}
 		curve.castedData = d
-		if plot.dimensions == 2 {
-			plot.plotXY(curve)
-		} else {
-			plot.plotXYZ(curve)
-		}
+
+		plot.plotND(curve)
 		plot.PointGroup[name] = curve
 
 	case [][]float32:
@@ -116,11 +113,8 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			}
 		}
 		curve.castedData = typeCasteSlice
-		if plot.dimensions == 2 {
-			plot.plotXY(curve)
-		} else {
-			plot.plotXYZ(curve)
-		}
+
+		plot.plotND(curve)
 		plot.PointGroup[name] = curve
 
 	case [][]int:
@@ -136,11 +130,8 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			}
 		}
 		curve.castedData = typeCasteSlice
-		if plot.dimensions == 2 {
-			plot.plotXY(curve)
-		} else {
-			plot.plotXYZ(curve)
-		}
+
+		plot.plotND(curve)
 		plot.PointGroup[name] = curve
 
 	case [][]int8:
@@ -157,11 +148,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		}
 		curve.castedData = typeCasteSlice
 
-		if plot.dimensions == 2 {
-			plot.plotXY(curve)
-		} else {
-			plot.plotXYZ(curve)
-		}
+		plot.plotND(curve)
 		plot.PointGroup[name] = curve
 
 	case [][]int16:
@@ -178,11 +165,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		}
 		curve.castedData = typeCasteSlice
 
-		if plot.dimensions == 2 {
-			plot.plotXY(curve)
-		} else {
-			plot.plotXYZ(curve)
-		}
+		plot.plotND(curve)
 		plot.PointGroup[name] = curve
 
 	case [][]int32:
@@ -199,11 +182,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		}
 		curve.castedData = typeCasteSlice
 
-		if plot.dimensions == 2 {
-			plot.plotXY(curve)
-		} else {
-			plot.plotXYZ(curve)
-		}
+		plot.plotND(curve)
 		plot.PointGroup[name] = curve
 
 	case [][]int64:
@@ -220,16 +199,12 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 		}
 		curve.castedData = typeCasteSlice
 
-		if plot.dimensions == 2 {
-			plot.plotXY(curve)
-		} else {
-			plot.plotXYZ(curve)
-		}
+		plot.plotND(curve)
 		plot.PointGroup[name] = curve
 
 	case []float64:
 		curve.castedData = d
-		plot.plotX(curve)
+		plot.plot1D(curve)
 		plot.PointGroup[name] = curve
 	case []float32:
 		originalSlice := d
@@ -238,7 +213,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
-		plot.plotX(curve)
+		plot.plot1D(curve)
 		plot.PointGroup[name] = curve
 	case []int:
 		originalSlice := d
@@ -247,7 +222,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
-		plot.plotX(curve)
+		plot.plot1D(curve)
 		plot.PointGroup[name] = curve
 	case []int8:
 		originalSlice := d
@@ -256,7 +231,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
-		plot.plotX(curve)
+		plot.plot1D(curve)
 		plot.PointGroup[name] = curve
 	case []int16:
 		originalSlice := d
@@ -265,7 +240,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
-		plot.plotX(curve)
+		plot.plot1D(curve)
 		plot.PointGroup[name] = curve
 	case []int32:
 		originalSlice := d
@@ -274,7 +249,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
-		plot.plotX(curve)
+		plot.plot1D(curve)
 		plot.PointGroup[name] = curve
 	case []int64:
 		originalSlice := d
@@ -283,7 +258,7 @@ func (plot *Plot) AddPointGroup(name string, style string, data any, spec ...Plo
 			typeCasteSlice[i] = float64(originalSlice[i])
 		}
 		curve.castedData = typeCasteSlice
-		plot.plotX(curve)
+		plot.plot1D(curve)
 		plot.PointGroup[name] = curve
 	default:
 		return &gnuplotError{"invalid number of dims "}
@@ -308,7 +283,7 @@ func (plot *Plot) RemovePointGroup(name string) {
 	delete(plot.PointGroup, name)
 	plot.cleanplot()
 	for _, pointGroup := range plot.PointGroup {
-		plot.plotX(pointGroup)
+		plot.plot1D(pointGroup)
 	}
 }
 
@@ -331,6 +306,6 @@ func (plot *Plot) ResetPointGroupStyle(name string, style string) (err error) {
 	}
 	plot.RemovePointGroup(name)
 	pointGroup.style = style
-	plot.plotX(pointGroup)
+	plot.plot1D(pointGroup)
 	return err
 }

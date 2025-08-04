@@ -59,8 +59,11 @@ func NewPlot(dimensions int, persist, debug bool) (*Plot, error) {
 		return nil, err
 	}
 	// Only 1,2,3 Dimensional plots are supported
-	if dimensions > 3 || dimensions < 1 {
-		return nil, &gnuplotError{fmt.Sprintf("invalid number of dims '%v'", dimensions)}
+	if p.dimensions > 3 || p.dimensions < 1 {
+		return nil, &gnuplotError{fmt.Sprintf("invalid number of dims '%v'", p.dimensions)}
+	}
+	if p.dimensions == 3 {
+		p.plotcmd = "splot"
 	}
 	p.proc = proc
 	p.Cmd("set term %s %s", "wxt", "enhanced")
@@ -68,7 +71,8 @@ func NewPlot(dimensions int, persist, debug bool) (*Plot, error) {
 	return p, nil
 }
 
-func (plot *Plot) plotX(PointGroup *PointGroup) error {
+// plot one-dimensional data as a 2D plot
+func (plot *Plot) plot1D(PointGroup *PointGroup) error {
 	f, err := os.CreateTemp(os.TempDir(), gGnuplotPrefix)
 	if err != nil {
 		return err
@@ -96,7 +100,8 @@ func (plot *Plot) plotX(PointGroup *PointGroup) error {
 	}
 }
 
-func (plot *Plot) plotXY(PointGroup *PointGroup) error {
+// plot multi-dimensional data as either a 2D plot or 3D plot
+func (plot *Plot) plotND(PointGroup *PointGroup) error {
 	// transpose list of columns to list of rows
 	rows, min_len := transpose(PointGroup.castedData.([][]float64))
 
@@ -127,39 +132,6 @@ func (plot *Plot) plotXY(PointGroup *PointGroup) error {
 		plot.nplots++
 		return plot.Cmd("%s \"%s\" title \"%s\" %s with %s",
 			// cmd, fname, PointGroup.name, strings.Trim(fmt.Sprint(PointGroup.plotObjectStyles), "[]"), PointGroup.style)
-			cmd, fname, PointGroup.name, PointGroup.plotObjectStyles, PointGroup.style)
-	}
-}
-
-func (plot *Plot) plotXYZ(PointGroup *PointGroup) error {
-	x := PointGroup.castedData.([][]float64)[0]
-	y := PointGroup.castedData.([][]float64)[1]
-	z := PointGroup.castedData.([][]float64)[2]
-	npoints := min(len(x), len(y))
-	npoints = min(npoints, len(z))
-	f, err := os.CreateTemp(os.TempDir(), gGnuplotPrefix)
-	if err != nil {
-		return err
-	}
-	fname := f.Name()
-	plot.tmpfiles[fname] = f
-
-	for i := 0; i < npoints; i++ {
-		fmt.Fprintf(f, "%v %v %v\n", x[i], y[i], z[i])
-	}
-
-	f.Close()
-	cmd := "splot" // Force 3D plot
-	if plot.nplots > 0 {
-		cmd = plotCommand
-	}
-
-	if PointGroup.name == "" {
-		plot.nplots++
-		return plot.Cmd("%s \"%s\" %s with %s", cmd, fname, PointGroup.plotObjectStyles, PointGroup.style)
-	} else {
-		plot.nplots++
-		return plot.Cmd("%s \"%s\" title \"%s\" %s with %s",
 			cmd, fname, PointGroup.name, PointGroup.plotObjectStyles, PointGroup.style)
 	}
 }
