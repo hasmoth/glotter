@@ -1,6 +1,9 @@
 package glot
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // with <style> { {linestyle | ls <line_style>}
 // 	|  {{linetype   | lt <line_type>}
@@ -74,6 +77,16 @@ func (s PlotObjectStyle) String() string {
 		object_style += fmt.Sprintf("%s %d", s.DashType.Name, s.DashType.Value)
 	}
 	return object_style
+}
+
+type PlotObjectStyles []PlotObjectStyle
+
+func (p PlotObjectStyles) String() string {
+	styles := make([]string, len(p))
+	for i, s := range p {
+		styles[i] = s.String()
+	}
+	return strings.Join(styles, " ")
 }
 
 func SetPointType(pt int) PlotObjectOptions {
