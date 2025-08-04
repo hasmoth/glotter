@@ -199,6 +199,11 @@ func (plot *Plot) SetZrange(start int, end int) error {
 	return plot.Cmd("set zrange [%d:%d]", start, end)
 }
 
+// SetSizeRatio changes the axis ratio of the plots
+func (plot *Plot) SetSizeRatio(val int) error {
+	return plot.Cmd("set size ratio %d", val)
+}
+
 // SavePlot function is used to save the plot at this point.
 // The plot is dynamic and additional pointgroups can be added and removed and different versions
 // of the same plot can be saved.
