@@ -32,7 +32,7 @@ type Func3d func(x float64, y float64) float64
 //	style       :=> Style of the curve
 //
 // NOTE: Currently only float64 type is supported for this function
-func (plot *Plot) AddFunc2d(name string, style string, x []float64, fct Func2d) error {
+func (plot *Plot) AddFunc2d(name string, style string, x []float64, fct Func2d, spec ...PlotObjectStyle) error {
 	y := make([]float64, len(x))
 	for index := range x {
 		y[index] = fct(x[index])
@@ -40,7 +40,7 @@ func (plot *Plot) AddFunc2d(name string, style string, x []float64, fct Func2d) 
 	combined := [][]float64{}
 	combined = append(combined, x)
 	combined = append(combined, y)
-	plot.AddPointGroup(name, style, combined)
+	plot.AddPointGroup(name, style, combined, spec...)
 	return nil
 }
 
@@ -73,7 +73,7 @@ func (plot *Plot) AddFunc2d(name string, style string, x []float64, fct Func2d) 
 //	pointsX     :=> The x Value of the points to be plotted.  y = func(x) is plotted on the curve.
 //
 // NOTE: Currently only float64 type is supported for this function
-func (plot *Plot) AddFunc3d(name string, style string, x []float64, y []float64, fct Func3d) error {
+func (plot *Plot) AddFunc3d(name string, style string, x []float64, y []float64, fct Func3d, spec ...PlotObjectStyle) error {
 	if len(x) != len(y) {
 		return &gnuplotError{"The length of the x-axis array and y-axis array are not same."}
 	}
@@ -85,6 +85,6 @@ func (plot *Plot) AddFunc3d(name string, style string, x []float64, y []float64,
 	combined = append(combined, x)
 	combined = append(combined, y)
 	combined = append(combined, z)
-	plot.AddPointGroup(name, style, combined)
+	plot.AddPointGroup(name, style, combined, spec...)
 	return nil
 }
